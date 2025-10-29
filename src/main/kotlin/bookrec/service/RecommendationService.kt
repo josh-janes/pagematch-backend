@@ -1,8 +1,8 @@
 package bookrec.service
 
 import bookrec.model.Recommendation
+import bookrec.model.RequestContext
 import bookrec.repository.RecommendationRepository
-import bookrec.repository.RatingRepository
 import org.slf4j.LoggerFactory
 import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.data.domain.PageRequest
@@ -13,16 +13,13 @@ import kotlin.jvm.optionals.getOrNull
 @Service
 class RecommendationService(
     private val recommendationRepository: RecommendationRepository,
-    private val ratingRepository: RatingRepository,
-    private val strategy: RecommendationStrategy
+    private val strategy: LlmRecommendationStrategy
 ) {
     private val logger = LoggerFactory.getLogger(RecommendationService::class.java)
 
-    fun getRecommendations(userId: Long): List<Recommendation> {
+    fun generateRecommendations(userId: Long, requestContext: RequestContext): List<Recommendation> {
         logger.debug("Generating recommendations for userId=$userId")
-        val ratings = ratingRepository.findById(userId).getOrNull()
-        // return strategy.generateRecommendations(ratings)
-        return emptyList()
+        return strategy.generateRecommendations(userId, requestContext)
     }
 
     fun getRecommendationById(id: Long): Recommendation? {
@@ -71,6 +68,12 @@ class RecommendationService(
 
     fun getPopularRecommendations(): List<Recommendation> {
         logger.debug("Fetching top-rated/popular recommendations")
+        val pageable: Pageable = PageRequest.of(0, 10)
+        return recommendationRepository.findAll(pageable).content
+    }
+
+    fun getRecentRecommendations(): List<Recommendation> {
+        logger.debug("Fetching recommendations")
         val pageable: Pageable = PageRequest.of(0, 10)
         return recommendationRepository.findAll(pageable).content
     }

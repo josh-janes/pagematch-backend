@@ -1,6 +1,7 @@
 package bookrec.controller
 
 import bookrec.model.Recommendation
+import bookrec.model.RequestContext
 import bookrec.service.RecommendationService
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
@@ -8,17 +9,17 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@PreAuthorize("hasRole('USER')")
+//@PreAuthorize("hasRole('USER')")
 @RequestMapping("/api/recommendations")
 class RecommendationController(
     private val recommendationService: RecommendationService
 ) {
     private val logger = LoggerFactory.getLogger(RecommendationController::class.java)
 
-    @GetMapping("/{userId}")
-    fun getRecommendations(@PathVariable userId: Long): ResponseEntity<List<Recommendation>> {
+    @PostMapping("/{userId}")
+    fun generateRecommendations(@PathVariable userId: Long, @RequestBody requestContext: RequestContext): ResponseEntity<List<Recommendation>> {
         logger.info("Fetching recommendations for userId=$userId")
-        return ResponseEntity.ok(recommendationService.getRecommendations(userId))
+        return ResponseEntity.ok(recommendationService.generateRecommendations(userId, requestContext))
     }
 
     @GetMapping("/{id}/details")
@@ -67,5 +68,11 @@ class RecommendationController(
     fun getPopularRecommendations(): ResponseEntity<List<Recommendation>> {
         logger.info("Fetching popular recommendations")
         return ResponseEntity.ok(recommendationService.getPopularRecommendations())
+    }
+
+    @GetMapping("/recent")
+    fun getRecentRecommendations(): ResponseEntity<List<Recommendation>> {
+        logger.info("Fetching recommendations")
+        return ResponseEntity.ok(recommendationService.getRecentRecommendations())
     }
 }

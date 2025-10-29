@@ -8,5 +8,5 @@ RUN gradle clean bootJar --no-daemon
 # Stage 2: Run
 FROM openjdk:17-jdk-slim
 WORKDIR /app
-COPY --from=build /home/gradle/project/build/libs/bookrec.jar app.jar
+COPY --from=build /home/gradle/project/build/libs/PageMatch-0.0.1.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]

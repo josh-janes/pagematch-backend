@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional
 class BookService(
     private val bookRepository: BookRepository
 ) {
-    private val logger = LoggerFactory.getLogger(BookRecommendationService::class.java)
+    private val logger = LoggerFactory.getLogger(BookService::class.java)
 
     // --- CREATE ---
     fun createBook(book: Book): Book {
@@ -36,14 +36,15 @@ class BookService(
         logger.info("Updating book with id: {}", id)
         val existingBook = bookRepository.findById(id)
         if (existingBook.isPresent) {
-            val book = existingBook.get().copy(
-                id = updatedBook.id,
-                title = updatedBook.title,
-                author = updatedBook.author,
-                genre = updatedBook.genre,
-                averageRating = updatedBook.averageRating,
-                synopsis = updatedBook.synopsis
-            )
+            val book = existingBook.get() //TODO
+            //            .copy(
+//                id = updatedBook.id,
+//                title = updatedBook.title,
+//                author = updatedBook.author,
+//                genre = updatedBook.genre,
+//                averageRating = updatedBook.score,
+//                synopsis = updatedBook.description
+//            )
             logger.debug("Book before update: {}", existingBook.get())
             logger.debug("Book after update: {}", book)
             return bookRepository.save(book)
@@ -65,18 +66,8 @@ class BookService(
     }
 
     fun getPopularBooks(): List<Book> {
-        logger.info("Fetching popular books (rating > 4.0)")
-        val topRatedBooks = bookRepository.findTopRated(4.0)
-        return topRatedBooks.map {
-            Book(
-                id = it.id,
-                title = it.title,
-                author = it.author,
-                genre = it.genre,
-                averageRating = it.averageRating,
-                synopsis = it.synopsis
-            )
-        }
+        logger.info("Fetching popular books (rating > 4.5)")
+        return bookRepository.findTopRated(4.5)
     }
 
     fun getBooksByGenre(genre: String): List<Book> {
@@ -89,8 +80,8 @@ class BookService(
         return bookRepository.saveAll(books)
     }
 
-    fun getBooksByTitle(title: String): List<Book> {
+    fun getBooksByTitleAndAuthor(title: String, author: String): List<Book> {
         logger.info("Fetching books with title containing: {}", title)
-        return bookRepository.findByTitleContainingIgnoreCase(title)
+        return bookRepository.findByTitleAndAuthorContainingIgnoreCase(title, author)
     }
 }

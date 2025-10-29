@@ -85,10 +85,10 @@ class BookController(
         return ResponseEntity.ok(recommendations)
     }
 
-    @GetMapping("/title/{title}")
-    fun getBooksByTitle(@PathVariable title: String): ResponseEntity<List<Book>> {
+    @GetMapping("/title/{title}/{author}")
+    fun getBooksByTitleAndAuthor(@PathVariable title: String, @PathVariable author: String): ResponseEntity<List<Book>> {
         logger.info("Fetching books by title: {}", title)
-        val books = bookService.getBooksByTitle(title)
+        val books = bookService.getBooksByTitleAndAuthor(title, author)
         return if (books.isNotEmpty()) {
             ResponseEntity.ok(books)
         } else {
