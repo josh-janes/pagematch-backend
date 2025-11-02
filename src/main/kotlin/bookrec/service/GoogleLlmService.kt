@@ -47,13 +47,6 @@ class GoogleLlmService(
             .call()
             .entity(object : ParameterizedTypeReference<List<Recommendation>>() {})
 
-        // generate recommendations with call to LLM API
-        //TODO
-        //chatClient?.prompt(generateRecommendationPrompt)?.call()?.entity(List<Recommendation>)
-        // for each recommendation, search for title in book database. If title exists, return book id with this response, otherwise -1
-//        val recommendations = listOf(Recommendation(1, 100, 1, "The Lord of the Rings", "Tolkien was pretty cool I guess"),
-//            Recommendation(1, 100, 1, "Suttree", "What in the name of the lord are you doing"))
-
         // change id to the id of a book in our system
         if (recommendations != null) {
             for (recommendation in recommendations) {

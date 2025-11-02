@@ -7,9 +7,11 @@ import bookrec.service.BookService
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 
 @RestController
+@PreAuthorize("hasRole('USER')")
 @RequestMapping("/api/books")
 class BookController(
     private val bookService: BookService

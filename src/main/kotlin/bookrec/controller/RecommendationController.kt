@@ -2,14 +2,17 @@ package bookrec.controller
 
 import bookrec.model.Recommendation
 import bookrec.model.RequestContext
+import bookrec.model.User
 import bookrec.service.RecommendationService
 import org.slf4j.LoggerFactory
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
 @RestController
-//@PreAuthorize("hasRole('USER')")
+@PreAuthorize("hasRole('USER')")
 @RequestMapping("/api/recommendations")
 class RecommendationController(
     private val recommendationService: RecommendationService
@@ -17,10 +20,26 @@ class RecommendationController(
     private val logger = LoggerFactory.getLogger(RecommendationController::class.java)
 
     @PostMapping("/{userId}")
-    fun generateRecommendations(@PathVariable userId: Long, @RequestBody requestContext: RequestContext): ResponseEntity<List<Recommendation>> {
-        logger.info("Fetching recommendations for userId=$userId")
+    fun generateRecommendations(
+        @AuthenticationPrincipal principal: User,
+        @RequestBody requestContext: RequestContext
+    ): ResponseEntity<List<Recommendation>> {
+        val userId = principal.id
+        logger.info("Fetching recommendations for authenticated userId=$userId")
         return ResponseEntity.ok(recommendationService.generateRecommendations(userId, requestContext))
+
     }
+
+    @GetMapping
+    fun getRecommendations(
+        @AuthenticationPrincipal principal: User,
+    ): ResponseEntity<List<Recommendation>> {
+        val userId = principal.id
+        logger.info("Fetching recommendation with id=$userId")
+        val recommendations = recommendationService.getUserRecommendationHistory(userId)
+        return ResponseEntity.ok(recommendations)
+    }
+
 
     @GetMapping("/{id}/details")
     fun getRecommendationById(@PathVariable id: Long): ResponseEntity<Recommendation> {
@@ -31,35 +50,61 @@ class RecommendationController(
     }
 
     @PostMapping
-    fun addRecommendation(@RequestBody recommendation: Recommendation): ResponseEntity<Recommendation> {
-        logger.info("Adding new recommendation for bookId=${recommendation.bookId}, recommendationId=${recommendation.recommendationId}")
-        return ResponseEntity.ok(recommendationService.addRecommendation(recommendation))
+    fun addRecommendation(
+        @AuthenticationPrincipal principal: User,
+        @RequestBody recommendation: Recommendation
+    ): ResponseEntity<Recommendation> {
+        val recWithUser = recommendation.copy(userId = principal.id)
+        logger.info("Adding new recommendation for bookId=${recWithUser.bookId}")
+        return ResponseEntity.ok(recommendationService.addRecommendation(recWithUser))
     }
 
     @PostMapping("/batch")
-    fun addRecommendationsBatch(@RequestBody recommendations: List<Recommendation>): ResponseEntity<List<Recommendation>> {
-        logger.info("Batch adding ${recommendations.size} recommendations")
-        return ResponseEntity.ok(recommendationService.addRecommendationsBatch(recommendations))
+    fun addRecommendationsBatch(
+        @AuthenticationPrincipal principal: User,
+        @RequestBody recommendations: List<Recommendation>
+    ): ResponseEntity<List<Recommendation>> {
+        val recsWithUser = recommendations.map { it.copy(userId = principal.id) }
+        logger.info("Batch adding ${recsWithUser.size} recommendations for user ${principal.id}")
+        return ResponseEntity.ok(recommendationService.addRecommendationsBatch(recsWithUser))
     }
 
     @PutMapping("/{id}")
-    fun updateRecommendation(@PathVariable id: Long, @RequestBody updated: Recommendation): ResponseEntity<Recommendation> {
-        logger.info("Updating recommendation id=$id")
-        val result = recommendationService.updateRecommendation(id, updated)
-        return if (result != null) ResponseEntity.ok(result)
-        else ResponseEntity.notFound().build()
+    fun updateRecommendation(
+        @PathVariable id: Long,
+        @RequestBody updated: Recommendation,
+        @AuthenticationPrincipal principal: User
+    ): ResponseEntity<Recommendation> {
+        val existing = recommendationService.getRecommendationById(id)
+        if (existing == null || existing.userId != principal.id) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+        val result = recommendationService.updateRecommendation(id, updated.copy(userId = principal.id))
+        return ResponseEntity.ok(result!!)
     }
 
     @DeleteMapping("/{id}")
-    fun deleteRecommendation(@PathVariable id: Long): ResponseEntity<Void> {
-        logger.info("Deleting recommendation id=$id")
-        return if (recommendationService.deleteRecommendation(id)) ResponseEntity.noContent().build()
-        else ResponseEntity.notFound().build()
+    fun deleteRecommendation(
+        @PathVariable id: Long,
+        @AuthenticationPrincipal principal: User
+    ): ResponseEntity<Void> {
+        val existing = recommendationService.getRecommendationById(id)
+        if (existing == null || existing.userId != principal.id) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+        recommendationService.deleteRecommendation(id)
+        return ResponseEntity.noContent().build()
     }
 
     @PostMapping("/rate_recommendation")
-    fun rateRecommendation(@RequestBody recommendation: Recommendation, rating: Int): ResponseEntity<String> {
-        logger.info("Recommendation ${recommendation.recommendationId} rated ${rating}")
+    fun rateRecommendation(
+        @RequestBody recommendation: Recommendation,
+        @RequestParam rating: Int,
+        @AuthenticationPrincipal principal: User
+    ): ResponseEntity<String> {
+        if (recommendation.userId != principal.id) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Cannot rate another user's recommendation")
+        }
         recommendationService.rateRecommendation(recommendation)
         return ResponseEntity.ok("Rating submitted successfully")
     }

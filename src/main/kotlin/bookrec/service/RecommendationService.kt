@@ -75,7 +75,8 @@ class RecommendationService(
     fun rateRecommendation(recommendation: Recommendation) {
         logger.debug("Processing rating for recommendation id=${recommendation.recommendationId}")
         // logic to update the rating or link to Rating entity
-        recommendationRepository.save(recommendation)
+        //recommendationRepository.save(recommendation)
+        //TODO
     }
 
     fun getPopularRecommendations(): List<Recommendation> {
@@ -88,5 +89,10 @@ class RecommendationService(
         logger.debug("Fetching recommendations")
         val pageable: Pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "recommendationId"))
         return recommendationRepository.findAll(pageable).content
+    }
+
+    fun getUserRecommendationHistory(userId: Long): List<Recommendation> {
+        logger.debug("Fetching recommendations for user id=$userId")
+        return recommendationRepository.findUserRecommendationHistory(userId)
     }
 }

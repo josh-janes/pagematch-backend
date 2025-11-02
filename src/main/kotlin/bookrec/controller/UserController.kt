@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import java.io.IOException
@@ -25,7 +26,8 @@ class UserController(
 ) {
     private val logger = LoggerFactory.getLogger(UserController::class.java)
 
-    // --- CREATE ---
+    // --- CREATE USER (only allowed by admins) ---
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     fun createUser(@RequestBody user: User): ResponseEntity<User> {
         logger.info("Creating new user: {}", user.username)
@@ -33,51 +35,48 @@ class UserController(
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser)
     }
 
-    // --- READ ALL ---
+    // --- READ ALL USERS (admins only) ---
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     fun getAllUsers(): ResponseEntity<List<User>> {
         logger.info("Fetching all users")
-        val users = userService.getAllUsers()
-        return ResponseEntity.ok(users)
+        return ResponseEntity.ok(userService.getAllUsers())
     }
 
-    // --- READ ONE ---
-    @GetMapping("/{id}")
-    fun getUserById(@PathVariable id: Long): ResponseEntity<User> {
-        logger.info("Fetching user with id: {}", id)
-        val user = userService.getUserById(id)
+    // --- READ ONE (authenticated user only for their own data) ---
+    @GetMapping("/me")
+    fun getCurrentUser(@AuthenticationPrincipal principal: User): ResponseEntity<User> {
+        val user = userService.getUserById(principal.id)
         return if (user != null) ResponseEntity.ok(user)
-        else {
-            logger.warn("User not found with id: {}", id)
-            ResponseEntity.notFound().build()
-        }
+        else ResponseEntity.notFound().build()
     }
 
-    // --- SEARCH BY USERNAME ---
-    @GetMapping("/username/{username}")
-    fun getUserByUsername(@PathVariable username: String): ResponseEntity<List<User>> {
-        logger.info("Fetching users with username like: {}", username)
-        val users = userService.getUserByUsername(username)
-        return if (users.isNotEmpty()) ResponseEntity.ok(users)
-        else {
-            logger.warn("No users found with username: {}", username)
-            ResponseEntity.notFound().build()
-        }
-    }
-
-    // --- UPDATE PROFILE ---
+    // --- UPDATE PROFILE (only self) ---
     @PostMapping("/update_profile")
-    fun updateProfile(@RequestBody updatedUser: User): ResponseEntity<User> {
-        logger.info("Updating profile for user: {}", updatedUser.username)
+    fun updateProfile(
+        @RequestBody updatedUser: User,
+        @AuthenticationPrincipal principal: User
+    ): ResponseEntity<User> {
+        if (updatedUser.id != principal.id) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
         val user = userService.updateProfile(updatedUser)
         return if (user != null) ResponseEntity.ok(user)
-        else {
-            logger.warn("User not found for update: {}", updatedUser.username)
+        else ResponseEntity.notFound().build()
+    }
+
+    // --- DELETE (only self) ---
+    @DeleteMapping("/me")
+    fun deleteCurrentUser(@AuthenticationPrincipal principal: User): ResponseEntity<Void> {
+        return if (userService.deleteUser(principal.id)) {
+            ResponseEntity.noContent().build()
+        } else {
             ResponseEntity.notFound().build()
         }
     }
 
-    // --- IMPORT DATA / BATCH ADD ---
+    // --- IMPORT DATA / BATCH ADD (admin only) ---
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/import_data")
     fun importData(@RequestBody users: List<User>): ResponseEntity<List<User>> {
         logger.info("Importing batch of {} users", users.size)
@@ -85,48 +84,36 @@ class UserController(
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUsers)
     }
 
-    @DeleteMapping("/{id}")
-    fun deleteUser(@PathVariable id: Long): ResponseEntity<Void> {
-        logger.info("Deleting user with id: {}", id)
-        return if (userService.deleteUser(id)) {
-            ResponseEntity.noContent().build()
-        } else {
-            logger.warn("User not found for deletion: {}", id)
-            ResponseEntity.notFound().build()
-        }
-    }
+    // --- GENERATE USER CONTEXT (only self) ---
+    @PostMapping("/generate_user_context")
+    fun generateUserContext(
+        @AuthenticationPrincipal principal: User,
+        @RequestParam("file") file: MultipartFile
+    ): ResponseEntity<UserContext?> {
 
-    @PostMapping("/generate_user_context/{id}")
-    fun generateUserContext(@PathVariable id: Long, @RequestParam("file") file: MultipartFile): ResponseEntity<UserContext?> {
-
-        // Corrected validation logic:
-        // Reject if the file is empty OR if the content type is NOT 'text/csv'
-        if (file.isEmpty || !"text/csv".equals(file.contentType)) {
-            // You could add a log here to see why it failed, e.g.:
-            // logger.warn("Bad request: file is empty or content type is not csv. Actual type: ${file.contentType}")
-            return ResponseEntity.badRequest().build<UserContext?>()
+        if (file.isEmpty || file.contentType != "text/csv") {
+            logger.warn("Bad request: file empty or not CSV. Actual type: ${file.contentType}")
+            return ResponseEntity.badRequest().build()
         }
 
-        try {
-            val summary: String = csvProcessingService.processCsv(file)
-            val userContext: UserContext? = recommendationStrategy.generateUserProfile(id, summary)
+        return try {
+            val summary = csvProcessingService.processCsv(file)
+            val userContext = recommendationStrategy.generateUserProfile(principal.id, summary)
             userContext?.let {
-                it.id = id
-                userService.saveUserContext(id, userContext)
+                it.id = principal.id
+                userService.saveUserContext(principal.id, userContext)
                 logger.info("User context updated: {}", userContext)
             }
-            return ResponseEntity.ok<UserContext?>(userContext)
-
+            ResponseEntity.ok(userContext)
         } catch (e: IOException) {
             logger.error(e.message, e)
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build<UserContext?>()
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
         } catch (e: CsvValidationException) {
             logger.error(e.message, e)
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build<UserContext?>()
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
         } catch (e: IllegalArgumentException) {
             logger.error(e.message, e)
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body<UserContext?>(null)
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null)
         }
     }
-
 }
