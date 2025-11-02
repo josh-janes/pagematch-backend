@@ -57,15 +57,13 @@ class GoogleLlmService(
         // change id to the id of a book in our system
         if (recommendations != null) {
             for (recommendation in recommendations) {
+                recommendation.image_url = ""
+                recommendation.userId = context.id
+                recommendation.bookId = -1
                 val books = bookService.getBooksByTitleAndAuthor(recommendation.title, recommendation.author)
                 books.firstOrNull()?.let { book ->
                     recommendation.bookId = book.id!!
                     recommendation.image_url = book.coverImageUrl!!
-                }
-                if (books.isNullOrEmpty()) {
-                    recommendation.bookId = -1;
-
-
                 }
             }
             return recommendations

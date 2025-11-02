@@ -17,17 +17,24 @@ repositories {
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("com.opencsv:opencsv:5.12.0")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-security")
 
     implementation("org.springframework.ai:spring-ai-core")
     implementation("org.springframework.ai:spring-ai-vertex-ai-gemini-spring-boot-starter")
+
     runtimeOnly("org.postgresql:postgresql")
+
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.0")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+
     implementation("com.auth0:java-jwt:4.4.0")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+
+    implementation("com.opencsv:opencsv:5.12.0")
+
+    testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
@@ -44,19 +51,3 @@ kotlin {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
-
-//tasks.jar {
-//    enabled = false
-//}
-//tasks.bootJar {
-//    archiveFileName.set("bookrec.jar")
-//    mainClass.set("bookrec.PageMatchApplicationKt")
-//}
-//
-//sourceSets {
-//    main {
-//        resources {
-//            srcDirs("src/main/resources")
-//        }
-//    }
-//}

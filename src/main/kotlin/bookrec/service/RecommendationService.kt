@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import kotlin.jvm.optionals.getOrNull
 
@@ -19,7 +20,9 @@ class RecommendationService(
 
     fun generateRecommendations(userId: Long, requestContext: RequestContext): List<Recommendation> {
         logger.debug("Generating recommendations for userId=$userId")
-        return strategy.generateRecommendations(userId, requestContext)
+        val recommendations = strategy.generateRecommendations(userId, requestContext)
+        addRecommendationsBatch(recommendations) // save recs to db
+        return recommendations
     }
 
     fun getRecommendationById(id: Long): Recommendation? {
@@ -34,7 +37,16 @@ class RecommendationService(
 
     fun addRecommendationsBatch(recommendations: List<Recommendation>): List<Recommendation> {
         logger.debug("Saving ${recommendations.size} recommendations in batch")
-        return recommendationRepository.saveAll(recommendations)
+
+        val sanitized = recommendations.map {
+            it.copy(
+                title = it.title.take(255),
+                author = it.author.take(255),
+                reason = it.reason.take(2000),
+                image_url = it.image_url.take(500)
+            )
+        }
+        return recommendationRepository.saveAll(sanitized)
     }
 
     fun updateRecommendation(id: Long, updated: Recommendation): Recommendation? {
@@ -74,7 +86,7 @@ class RecommendationService(
 
     fun getRecentRecommendations(): List<Recommendation> {
         logger.debug("Fetching recommendations")
-        val pageable: Pageable = PageRequest.of(0, 10)
+        val pageable: Pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "recommendationId"))
         return recommendationRepository.findAll(pageable).content
     }
 }

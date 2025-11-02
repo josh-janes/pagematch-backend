@@ -8,6 +8,9 @@ import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
+import org.springframework.security.core.userdetails.UserDetails
+import org.springframework.security.core.userdetails.UserDetailsService
+import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.PostMapping
@@ -21,7 +24,7 @@ import java.io.IOException
 class UserService(
     private val userRepository: UserRepository,
     private val userContextRepository: UserContextRepository
-) {
+): UserDetailsService {
     private val logger = LoggerFactory.getLogger(UserService::class.java)
 
     // --- CREATE ---
@@ -144,5 +147,12 @@ class UserService(
         return userContextRepository.findById(id)
             // If the Optional is empty (nothing found), return the result of this expression instead.
             .orElse(UserContext(id = id))
+    }
+
+    override fun loadUserByUsername(username: String): UserDetails {
+        return userRepository.findByUsername(username)
+            .orElseThrow {
+                UsernameNotFoundException("User not found with username: $username")
+            }
     }
 }

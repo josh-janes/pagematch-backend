@@ -1,5 +1,6 @@
 package bookrec.model
 
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
@@ -10,10 +11,11 @@ data class Recommendation(
     @Id
     var recommendationId: Long,
     var bookId: Long,
-    val userId: Long,
+    var userId: Long,
     val title: String,
     val author: String,
     var image_url: String,
+    @Column(columnDefinition = "TEXT")
     val reason: String // LLM-generated explanation
 )
 
