@@ -4,8 +4,11 @@ import bookrec.model.User
 import bookrec.model.UserContext
 import bookrec.service.CsvProcessingService
 import bookrec.service.LlmRecommendationStrategy
+import bookrec.service.RatingService
+import bookrec.service.RecommendationService
 import bookrec.service.UserService
 import com.opencsv.exceptions.CsvValidationException
+import jakarta.transaction.Transactional
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -15,14 +18,15 @@ import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import java.io.IOException
 
-
 @RestController
 @PreAuthorize("hasRole('USER')")
 @RequestMapping("/api/user")
 class UserController(
     private val userService: UserService,
     private val csvProcessingService: CsvProcessingService,
-    private val recommendationStrategy: LlmRecommendationStrategy
+    private val recommendationStrategy: LlmRecommendationStrategy,
+    private val recommendationService: RecommendationService,
+    private val ratingService: RatingService
 ) {
     private val logger = LoggerFactory.getLogger(UserController::class.java)
 
@@ -66,12 +70,28 @@ class UserController(
     }
 
     // --- DELETE (only self) ---
+    @Transactional
     @DeleteMapping("/me")
     fun deleteCurrentUser(@AuthenticationPrincipal principal: User): ResponseEntity<Void> {
-        return if (userService.deleteUser(principal.id)) {
-            ResponseEntity.noContent().build()
-        } else {
-            ResponseEntity.notFound().build()
+
+        try {
+            // delete all recommendations
+            val recDeleted = recommendationService.deleteRecommendationsByUserId(principal.id)
+            logger.debug("Deleted $recDeleted recommendations for user id=${principal.id}")
+
+            // delete all ratings
+            val ratingsDeleted = ratingService.deleteRatingByUserId(principal.id)
+            logger.debug("Deleted $ratingsDeleted ratings for user id=${principal.id}")
+
+            // delete the user itself
+            return if (userService.deleteUser(principal.id)) {
+                ResponseEntity.noContent().build()
+            } else {
+                ResponseEntity.notFound().build()
+            }
+        } catch (ex: Exception) {
+            logger.error("Failed to delete user and related data for user id=${principal.id}", ex)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
         }
     }
 
@@ -114,6 +134,22 @@ class UserController(
         } catch (e: IllegalArgumentException) {
             logger.error(e.message, e)
             ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null)
+        }
+    }
+
+    // --- GET USER CONTEXT
+    @GetMapping("/get_user_context")
+    fun getUserContext(
+        @AuthenticationPrincipal principal: User
+    ): ResponseEntity<UserContext?> {
+
+        return try {
+            val userContext = userService.findUserContextById(principal.id)
+
+            ResponseEntity.ok(userContext)
+        } catch (e: Exception) {
+            logger.error(e.message, e)
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
         }
     }
 }

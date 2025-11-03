@@ -96,6 +96,20 @@ class RecommendationController(
         return ResponseEntity.noContent().build()
     }
 
+
+    @DeleteMapping("/userId/{userId}")
+    fun deleteRecommendationByUserId(
+        @PathVariable userId: Long,
+        @AuthenticationPrincipal principal: User
+    ): ResponseEntity<Void> {
+        if (userId != principal.id) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+        recommendationService.deleteRecommendationsByUserId(userId)
+        return ResponseEntity.noContent().build()
+    }
+
+
     @PostMapping("/rate_recommendation")
     fun rateRecommendation(
         @RequestBody recommendation: Recommendation,

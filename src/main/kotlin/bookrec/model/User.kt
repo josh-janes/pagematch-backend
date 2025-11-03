@@ -1,5 +1,6 @@
 package bookrec.model
 
+import bookrec.persistence.CryptoConverter
 import jakarta.persistence.*
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -17,7 +18,8 @@ data class User(
     @Column(nullable = false, unique = true)
     private val username: String,
 
-    @Column(nullable = false)
+    @Column(unique = true, nullable = false)
+    @Convert(converter = CryptoConverter::class)
     val email: String,
 
     // Password field - will be BCrypt encoded

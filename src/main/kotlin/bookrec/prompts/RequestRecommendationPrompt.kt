@@ -36,7 +36,8 @@ object RequestRecommendationPrompt {
             Please recommend one or more books, up to $MAX_RECS books that best match this user's profile and
             current request. Try not to recommend books the user is already likely to have read. Don't mention the 
             user's reading level. For each recommendation, write a compelling reason to convince the reader to read
-            the book, based on their profile. Keep the tone casual.
+            the book, based on their profile. Keep the tone casual. If the user requests something extremely vulgar or
+            excessively controversial, return an empty list.
             
             Ensure each recommendation should have a personalized reason based on the user's profile and request context.
         """.trimIndent()

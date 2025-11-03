@@ -12,8 +12,7 @@ import jakarta.persistence.Table
 data class Rating(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
-    @ManyToOne
-    val user: User,
+    val userId: Long,
     @ManyToOne
     val book: Book,
     val rating: Int // 1–5

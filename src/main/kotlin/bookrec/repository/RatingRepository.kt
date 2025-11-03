@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository
 @Repository
 interface RatingRepository : JpaRepository<Rating, Long> {
     fun getRatingByBookId(bookId: Long): List<Rating>
+
+    fun deleteByUserId(userId: Long): Long  // Returns number of rows deleted
 }

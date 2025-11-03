@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
-import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import kotlin.jvm.optionals.getOrNull
 
@@ -86,13 +85,20 @@ class RecommendationService(
     }
 
     fun getRecentRecommendations(): List<Recommendation> {
-        logger.debug("Fetching recommendations")
-        val pageable: Pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "recommendationId"))
-        return recommendationRepository.findAll(pageable).content
+        logger.debug("Fetching recommendations excluding bookmarked")
+        val pageable: Pageable = PageRequest.of(0, 10)
+        return recommendationRepository
+            .findByReasonNotOrderByRecommendationIdDesc("User bookmarked this book.", pageable)
+            .content
     }
 
     fun getUserRecommendationHistory(userId: Long): List<Recommendation> {
         logger.debug("Fetching recommendations for user id=$userId")
         return recommendationRepository.findUserRecommendationHistory(userId)
+    }
+
+    fun deleteRecommendationsByUserId(userId: Long): Long {
+        logger.debug("Deleting recommendations for user id=$userId")
+        return recommendationRepository.deleteByUserId(userId)
     }
 }

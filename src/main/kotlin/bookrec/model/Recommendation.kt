@@ -2,6 +2,8 @@ package bookrec.model
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 
@@ -9,6 +11,7 @@ import jakarta.persistence.Table
 @Table(name = "recommendations")
 data class Recommendation(
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var recommendationId: Long,
     var bookId: Long,
     var userId: Long,

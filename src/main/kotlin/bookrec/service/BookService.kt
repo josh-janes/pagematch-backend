@@ -70,11 +70,6 @@ class BookService(
         return bookRepository.findTopRated(4.5)
     }
 
-    fun getBooksByGenre(genre: String): List<Book> {
-        logger.info("Fetching books by genre: {}", genre)
-        return bookRepository.findByGenre(genre)
-    }
-
     fun createBooksBatch(books: List<Book>): List<Book> {
         logger.info("Saving batch of {} books", books.size)
         return bookRepository.saveAll(books)
