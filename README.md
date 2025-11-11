@@ -1,19 +1,19 @@
 # PageMatch
 
-PageMatch is a full-stack book recommendation engine that delivers personalized book suggestions using AI, built with Spring Boot (Kotlin), Spring AI, React, PostgreSQL, and AWS. The app processes a small set of Goodreads data to recommend books based on user ratings and preferences (e.g., "You loved *1984*; try *Brave New World*"). It features a responsive React UI, secure OAuth2 APIs, and efficient data handling.
+PageMatch is a full-stack book recommendation engine that delivers personalized book suggestions using AI, built with Spring Boot (Kotlin), Spring AI, React, PostgreSQL, and AWS. The app processes a small set of Goodreads data to recommend books based on user ratings and preferences (e.g., "You loved *1984*; try *Brave New World*"). It features a responsive React UI, and efficient data handling.
 
 ## Features
 - **Personalized Recommendations**: Uses Spring AI (Google Gemini) to generate book suggestions based on user ratings and genres.
 - **Responsive UI**: React/TypeScript front-end login, recommendation generation, user profiles, recommendation feed
-- **Secure APIs**: OAuth2 (Auth0) protects user data, aligning with cybersecurity demands
+- **Secure APIs**: Spring Security and encryption, along with JWT based request security
 - **Scalable Backend**: Spring Boot (Kotlin) with PostgreSQL
 
 ## Tech Stack
-- **Front-End**: React, TypeScript, Tailwind CSS, Chart.js
-- **Back-End**: Spring Boot (Kotlin), Spring AI (Gemini), Spring Security (OAuth2)
+- **Front-End**: React, TypeScript, Tailwind CSS
+- **Back-End**: Spring Boot (Kotlin), Spring AI (Gemini), Spring Security
 - **Database**: PostgreSQL
 - **Deployment**: AWS (Elastic Beanstalk, S3, RDS)
-- **Tools**: Docker, Gradle, Auth0
+- **Tools**: Docker, Gradle, Terraform
 
 ## Architecture
 ![Architecture Diagram](architecture.png)
@@ -26,8 +26,7 @@ PageMatch is a full-stack book recommendation engine that delivers personalized 
 ### Prerequisites
 - Docker, Docker Compose
 - Gradle 8.10+
-- Auth0 account (free tier)
-- Optional: AWS account, Hugging Face API token
+- Optional: AWS, GCP accounts
 
 ### Local Development
 1. Clone the repo:
@@ -49,5 +48,6 @@ PageMatch is a full-stack book recommendation engine that delivers personalized 
     cd ../pagematch-frontend
     npm install
     npm start
+
 
 Access the app at http://localhost:3000 (React) and http://localhost:8080/api (Spring Boot).
