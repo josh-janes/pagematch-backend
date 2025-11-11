@@ -9,14 +9,10 @@
       "HostPort": 5000
     }
   ],
-  "volumes": [
+  "Volumes": [
     {
-      "host": {
-        "sourcePath": "/etc/gcp/gcp_credentials.json"
-      },
-      "container": {
-        "containerPath": "/etc/gcp/gcp_credentials.json"
-      }
+      "HostDirectory": "/etc/gcp",
+      "ContainerDirectory": "/etc/gcp"
     }
   ],
   "environment": [
