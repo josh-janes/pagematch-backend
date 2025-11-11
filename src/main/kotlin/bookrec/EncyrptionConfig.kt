@@ -1,6 +1,5 @@
 package bookrec
 
-
 import bookrec.persistence.CryptoConverter
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean

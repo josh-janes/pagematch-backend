@@ -49,3 +49,22 @@ bin/
 .env
 
 gcp-credentials.json
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
+terraform.tfvars
+*.tfstate*
+.terraform/
+tf_debug.log
+terraform-destroy.log
+.terraform*
+terraform/terraform.tfvars
+*.tfvars
+
+aws
+
+.idea
+

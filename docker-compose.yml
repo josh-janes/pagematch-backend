@@ -25,13 +25,6 @@ services:
     env_file:
       - .env
     environment:
-      SPRING_DATASOURCE_URL: "jdbc:postgresql://db:5432/${DATABASE_NAME}"
-      SPRING_DATASOURCE_USERNAME: "${DATABASE_USERNAME}"
-      SPRING_DATASOURCE_PASSWORD: "${DATABASE_PASSWORD}"
-      SPRING_DATASOURCE_DRIVER_CLASS_NAME: "org.postgresql.Driver"
-      SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
-      SPRING_AI_OPENAI_API_KEY: "sk-dummy-key"
-      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
       JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
       GOOGLE_APPLICATION_CREDENTIALS: /app/gcp-credentials.json
     volumes:

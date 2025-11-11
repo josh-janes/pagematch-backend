@@ -1,5 +1,29 @@
 .gradle
-build
 out
 *.iml
 .idea
+.git
+.env
+aws
+
+
+.terraform
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+
+*.zip
+
+.DS_Store
+
+.gitignore
+
+!build/libs/*.jar # Important: Exclude the whole build dir, but NOT the final jar
+
+terraform # Exclude the directory with your .tf files
+
+.vscode
+
+build/
+# ...BUT MAKE AN EXCEPTION for the final JAR file inside it.
+!build/libs/*.jar

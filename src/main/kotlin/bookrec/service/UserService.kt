@@ -4,28 +4,20 @@ import bookrec.model.User
 import bookrec.model.UserContext
 import bookrec.repository.UserContextRepository
 import bookrec.repository.UserRepository
-import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DataIntegrityViolationException
-import org.springframework.http.HttpStatus
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
-import org.springframework.security.crypto.encrypt.TextEncryptor
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.multipart.MultipartFile
-import java.io.IOException
 
 
 @Service
 @Transactional
 class UserService(
     private val userRepository: UserRepository,
-    private val userContextRepository: UserContextRepository,
-    private val textEncryptor: TextEncryptor
+    private val userContextRepository: UserContextRepository
 ): UserDetailsService {
     private val logger = LoggerFactory.getLogger(UserService::class.java)
 

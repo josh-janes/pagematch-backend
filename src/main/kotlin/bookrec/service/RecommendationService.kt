@@ -39,6 +39,7 @@ class RecommendationService(
 
         val sanitized = recommendations.map {
             it.copy(
+                recommendationId = null,
                 title = it.title.take(255),
                 author = it.author.take(255),
                 reason = it.reason.take(2000),

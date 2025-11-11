@@ -5,6 +5,7 @@ import bookrec.model.LoginRequest
 import bookrec.model.AuthResponse
 import bookrec.model.RegisterRequest
 import bookrec.service.AuthService
+import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
@@ -14,21 +15,25 @@ import org.springframework.web.bind.annotation.*
 class AuthController(
     private val authService: AuthService
 ) {
+    private val logger = LoggerFactory.getLogger(RecommendationController::class.java)
 
     @PostMapping("/register")
     fun register(@RequestBody request: RegisterRequest): ResponseEntity<AuthResponse> {
+        logger.info("Register request")
         val response = authService.register(request)
         return ResponseEntity.ok(response)
     }
 
     @PostMapping("/login")
     fun login(@RequestBody request: LoginRequest): ResponseEntity<AuthResponse> {
+        logger.info("Login request")
         val response = authService.login(request)
         return ResponseEntity.ok(response)
     }
 
     @GetMapping("/me")
     fun getCurrentUser(@AuthenticationPrincipal userDetails: User): ResponseEntity<AuthResponse> {
+        logger.info("Get current user")
         return ResponseEntity.ok(
             AuthResponse(
                 id = userDetails.id,
@@ -43,29 +48,5 @@ class AuthController(
     @GetMapping("/status")
     fun checkAuthStatus(@AuthenticationPrincipal userDetails: User?): ResponseEntity<Map<String, Boolean>> {
         return ResponseEntity.ok(mapOf("authenticated" to (userDetails != null)))
-    }
-}
-
-// Separate controller for OAuth endpoints (dummy implementation)
-@RestController
-@RequestMapping("/oauth2")
-class OAuth2Controller {
-
-    @GetMapping("/authorization/google")
-    fun initiateGoogleLogin(): ResponseEntity<Map<String, String>> {
-        // Dummy endpoint - will redirect to actual Google OAuth when implemented
-        return ResponseEntity.ok(mapOf(
-            "message" to "OAuth not configured yet",
-            "status" to "Please set up Google OAuth credentials"
-        ))
-    }
-
-    @GetMapping("/callback")
-    fun oauth2Callback(): ResponseEntity<Map<String, String>> {
-        // Dummy callback endpoint
-        return ResponseEntity.ok(mapOf(
-            "message" to "OAuth callback - to be implemented",
-            "status" to "pending"
-        ))
     }
 }

@@ -22,6 +22,9 @@ dependencies {
     implementation("org.springframework.ai:spring-ai-core")
     implementation("org.springframework.ai:spring-ai-vertex-ai-gemini-spring-boot-starter")
 
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+
     runtimeOnly("org.postgresql:postgresql")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.0")
@@ -36,6 +39,10 @@ dependencies {
 
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+
+    implementation("io.jsonwebtoken:jjwt-api:0.11.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
 }
 
 dependencyManagement {

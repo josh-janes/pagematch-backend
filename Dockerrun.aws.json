@@ -1,0 +1,40 @@
+{
+  "AWSEBDockerrunVersion": "1",
+  "Image": {
+    "Name": "pagematch:latest"
+  },
+  "Ports": [
+    {
+      "ContainerPort": 5000,
+      "HostPort": 5000
+    }
+  ],
+  "volumes": [
+    {
+      "host": {
+        "sourcePath": "/etc/gcp/gcp_credentials.json"
+      },
+      "container": {
+        "containerPath": "/etc/gcp/gcp_credentials.json"
+      }
+    }
+  ],
+  "environment": [
+    {
+      "name": "GOOGLE_APPLICATION_CREDENTIALS",
+      "value": "/etc/gcp/gcp_credentials.json"
+    },
+    {
+      "name": "GOOGLE_AI_PROJECT_ID",
+      "value": "gen-lang-client-0644455582"
+    },
+    {
+      "name": "GOOGLE_AI_LOCATION",
+      "value": "us-central1"
+    },
+    {
+      "name": "GOOGLE_AI_MODEL",
+      "value": "gemini-1.5-flash"
+    }
+  ]
+}

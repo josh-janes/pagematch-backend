@@ -5,6 +5,7 @@ import bookrec.model.RegisterRequest
 import bookrec.model.LoginRequest
 import bookrec.model.User
 import bookrec.repository.UserRepository
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
@@ -15,7 +16,8 @@ import org.springframework.stereotype.Service
 class AuthService(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
-    private val authenticationManager: AuthenticationManager
+    private val authenticationManager: AuthenticationManager,
+    private val jwtTokenProvider: JwtTokenProvider
 ) {
 
     fun register(request: RegisterRequest): AuthResponse {
@@ -55,26 +57,20 @@ class AuthService(
             )
         )
 
-        // Set authentication in security context
-        SecurityContextHolder.getContext().authentication = authentication
-
         // Get the authenticated user
         val user = authentication.principal as User
+
+        // Generate JWT token
+        val token = jwtTokenProvider.generateToken(authentication)
 
         return AuthResponse(
             id = user.id,
             username = user.username,
             email = user.email,
             avatarUrl = null,
+            token = token, // INCLUDE TOKEN
             message = "Login successful"
         )
-    }
-
-    // Placeholder for OAuth login - to be implemented
-    fun loginWithOAuth(provider: String): AuthResponse {
-        // This will redirect to OAuth provider
-        // Implementation depends on Spring Security OAuth2 client setup
-        throw NotImplementedError("OAuth login to be implemented")
     }
 
     // Helper method to create or update OAuth user

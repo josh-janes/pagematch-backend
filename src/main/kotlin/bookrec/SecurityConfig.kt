@@ -1,6 +1,9 @@
 package bookrec
 
+import bookrec.service.CustomOAuth2UserService
+import bookrec.service.JwtAuthenticationFilter
 import bookrec.service.UserService
+import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -13,71 +16,69 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.stereotype.Component
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
-import org.springframework.web.servlet.config.annotation.CorsRegistry
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 class SecurityConfig(
-    private val userDetailsService: UserService
+    private val userDetailsService: UserService,
+    private val jwtAuthenticationFilter: JwtAuthenticationFilter
 ) {
 
     @Bean
-    fun passwordEncoder(): PasswordEncoder {
-        return BCryptPasswordEncoder()
-    }
+    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
     @Bean
     fun authenticationProvider(): DaoAuthenticationProvider {
-        val authProvider = DaoAuthenticationProvider()
-        authProvider.setUserDetailsService(userDetailsService)
-        authProvider.setPasswordEncoder(passwordEncoder())
-        return authProvider
+        val provider = DaoAuthenticationProvider()
+        provider.setUserDetailsService(userDetailsService)
+        provider.setPasswordEncoder(passwordEncoder())
+        return provider
     }
 
     @Bean
-    fun authenticationManager(config: AuthenticationConfiguration): AuthenticationManager {
-        return config.authenticationManager
-    }
+    fun authenticationManager(config: AuthenticationConfiguration): AuthenticationManager =
+        config.authenticationManager
 
     @Bean
-    fun filterChain(http: HttpSecurity): SecurityFilterChain {
-        println("✅✅✅ SecurityConfig is being loaded! ✅✅✅")
+    fun filterChain(http: HttpSecurity, customOAuth2UserService: CustomOAuth2UserService): SecurityFilterChain {
         http
+            .securityMatcher("/**")
             .cors { it.configurationSource(corsConfigurationSource()) }
-            .csrf { it.disable() }
-            .authorizeHttpRequests { authorize ->
-                authorize
+            .csrf{ it.disable() }
+            .authorizeHttpRequests { auth ->
+                auth
+                    .requestMatchers(
+                        "/actuator/health",
+                        "/actuator/health/**",
+                        "/api/health",
+                        "api/auth/register",
+                        "/api/auth/login",
+                        "/api/auth/status"
+                    ).permitAll()
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                    .requestMatchers("/", "/error", "/webjars/**").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
-                    .requestMatchers("/api/auth/status", "/api/auth/me").permitAll()
-                    .requestMatchers("/oauth2/**").permitAll()
+//                    .requestMatchers("/", "/error", "/webjars/**").permitAll()
+
+//                    .requestMatchers("/api/auth/**", "/oauth2/**", "/login/oauth2/**", "/login/oauth2/code/**").permitAll()
                     .anyRequest().authenticated()
             }
+//            .oauth2Login { oauth ->
+//                oauth
+//                    .loginPage("/login")
+//                    .defaultSuccessUrl("http://localhost:3000/oauth-success", true)
+//                    .failureUrl("http://localhost:3000/login?error=oauth")
+//                    .userInfoEndpoint { it.userService(customOAuth2UserService) }
+//            }
             .sessionManagement {
                 it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }
-            .formLogin { formLogin ->
-                formLogin
-                    // This is the URL the frontend form should POST to. Spring Security creates this endpoint for you.
-                    .loginProcessingUrl("/login")
-                    .successHandler { _, response, _ ->
-                        // On successful login, send a 200 OK status.
-                        response.status = 200
-                    }
-                    .failureHandler { _, response, exception ->
-                        // On failed login, send a 401 Unauthorized status with a clear message.
-                        response.sendError(401, "Invalid username or password")
-                    }
-            }
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
+            .formLogin { it.disable() }
             .httpBasic { it.disable() }
             .logout { logout ->
                 logout
@@ -93,14 +94,21 @@ class SecurityConfig(
 
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
-        val configuration = CorsConfiguration()
-        configuration.allowedOrigins = listOf("http://localhost:3000", "http://localhost:5173")
-        configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
-        configuration.allowedHeaders = listOf("*")
-        configuration.allowCredentials = true
+        val config = CorsConfiguration()
+
+        config.allowedOrigins = listOf(
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "https://pagematch.ca",
+            "https://www.pagematch.ca"
+        )
+        config.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        config.allowedHeaders = listOf("*")
+        config.allowCredentials = true
+        config.maxAge = 3600L
 
         val source = UrlBasedCorsConfigurationSource()
-        source.registerCorsConfiguration("/**", configuration)
+        source.registerCorsConfiguration("/**", config)
         return source
     }
 }

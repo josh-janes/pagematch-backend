@@ -1,12 +1,15 @@
 package bookrec
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 
 @SpringBootApplication
 class PageMatchApplication
 
 fun main(args: Array<String>) {
-    runApplication<PageMatchApplication>(*args)
+
+    val port = System.getenv("PORT")?.toInt() ?: 8080
+    runApplication<PageMatchApplication>(*args) {
+        setDefaultProperties(mapOf("server.port" to port))
+    }
 }

@@ -12,7 +12,7 @@ import jakarta.persistence.Table
 data class Recommendation(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var recommendationId: Long,
+    var recommendationId: Long?,
     var bookId: Long,
     var userId: Long,
     val title: String,
